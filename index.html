@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CQBLAB</title>
+    <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+   <style type="text/css">
+   	        audio{
+            display: none;
+            }        
+:root {
+            --glow-color: rgba(255,179,179,0.15);
+        }
+
+        body {
+            background: linear-gradient(45deg, #0a0a2e, #1a1a4f);
+            min-height: 100vh;
+            color: rgba(255,255,255,0.9);
+            font-family: system-ui;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .glow-effect {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--glow-color), transparent 60%);
+            filter: blur(40px);
+            pointer-events: none;
+        }
+
+        .event-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 3rem 0;
+            position: relative;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .year-counter {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 1rem 0;
+            color: #fff;
+        }
+
+        .event-desc {
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .parallax-bg {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+            
+            .year-counter {
+                font-size: 2rem;
+            }
+        }
+        .timeline-bar {
+            height: 4px;
+            background: linear-gradient(90deg, transparent 0%, #ff6b6b 50%, transparent 100%);
+            margin: 4rem 0;
+            position: relative;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff8787;
+            border-radius: 50%;
+            position: absolute;
+            top: -4px;
+            transform: translateX(-50%);
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.1rem;
+            padding-right: 120px;
+        }
+
+        #searchButton {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        #searchButton:hover {
+            opacity: 0.9;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff8787;
+            font-size: 1.2rem;
+            display: none;
+        }
+   </style>
+</head>
+<body class="bg-gray-900 min-h-screen">
+    <div id="root" x-data="{ menuOpen: false }">
+        <nav class="bg-black/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
+            <div class="container mx-auto px-4 py-3 flex items-center">
+                <!-- 完整菜单按钮 -->
+                <div class="relative mr-4">
+                    <button 
+                        @click="menuOpen = !menuOpen"
+                        class="p-2 rounded-lg hover:bg-red-900/20 transition-colors duration-200"
+                        x-ref="menuButton"
+                    >
+                        <i data-lucide="menu-square" class="w-6 h-6 text-red-400"></i>
+                    </button>
+
+                    <!-- 下拉菜单内容 -->
+                    <div 
+                        x-show="menuOpen"
+                        @click.outside="menuOpen = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        class="absolute left-0 mt-2 w-56 origin-top-left bg-gray-800 rounded-xl shadow-2xl border border-gray-700"
+                    >
+                        <div class="p-2 space-y-1">
+                            <!-- 菜单项 -->
+                            <a href="mayuwen123.github.io/ajh" @click.prevent="menuOpen = false" class="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:bg-gradient-to-r from-red-900/50 to-transparent rounded-lg transition-all">
+                                <i data-lucide="home" class="w-5 h-5 mr-3 text-red-400"></i>
+                                主站首页
+                            </a>
+                            
+                            <a href="https://github.com/yuwrn/YUWRN-AI-2/blob/main/%E6%96%87%E6%A1%A3.md" @click.prevent="menuOpen = false" class="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:bg-gradient-to-r from-red-900/50 to-transparent rounded-lg">
+                                <i data-lucide="flask-conical" class="w-5 h-5 mr-3 text-red-400"></i>
+                                实验室文档
+                            </a>
+
+                            <a href="https://github.com/yuwrn/YUWRN-AI-2/tree/main" @click.prevent="menuOpen = false" class="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:bg-gradient-to-r from-red-900/50 to-transparent rounded-lg">
+                                <i data-lucide="folder" class="w-5 h-5 mr-3 text-red-400"></i>
+                                项目仓库
+                                <span class="ml-auto bg-red-900/30 px-2 py-1 rounded text-xs">v2.4.1</span>
+                            </a>
+
+                            <div class="border-t border-gray-700 my-1.5"></div>
+
+                            <a href="#" @click.prevent="menuOpen = false" class="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:bg-gradient-to-r from-red-900/50 to-transparent rounded-lg">
+                                <i data-lucide="settings" class="w-5 h-5 mr-3 text-red-400"></i>
+                                参数设置（暂不可用）
+                            </a>
+
+                            <a href="#" @click.prevent="menuOpen = false" class="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:bg-gradient-to-r from-red-900/50 to-transparent rounded-lg">
+                                <i data-lucide="help-circle" class="w-5 h-5 mr-3 text-red-400"></i>
+                                帮助中心（暂不可用）
+                            </a>
+
+                            <div class="border-t border-gray-700 my-1.5"></div>
+
+                            <button @click="menuOpen = false" class="w-full flex items-center px-4 py-2.5 text-sm text-red-300 hover:bg-red-900/40 rounded-lg transition-colors">
+                                <i data-lucide="log-out" class="w-5 h-5 mr-3 text-red-400"></i>
+                                退出登录（暂不可用）
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 原有标题和状态标识 -->
+                <i data-lucide="radiation" class="w-8 h-8 text-red-500 mr-2"></i>
+                <h1 class="text-xl font-bold text-white">㉿CQBLAB</h1>
+                <div class="ml-auto bg-red-900/30 p-2 rounded flex items-center">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-2 text-red-400"></i>
+                    <span class="text-sm">AI来源：Moonshot</span>
+                </div>
+            </div>
+        </nav>
+    <div class="parallax-bg">
+        <div class="glow-effect" style="top:20%; left:10%"></div>
+        <div class="glow-effect" style="top:70%; right:15%"></div>
+    </div>
+    
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="输入想了解的历史事件...">
+            <button id="searchButton">AI生成</button>
+        </div>
+        <div id="events-container">
+            
+        </div>
+    </div>
+
+    <div class="loading">正在生成历史记忆...</div>
+    <div class="parallax-bg">
+        <div class="glow-effect" style="top:20%; left:10%"></div>
+        <div class="glow-effect" style="top:70%; right:15%"></div>
+    </div>
+    
+    <div class="container">
+        <div class="loading">正在生成历史记忆...</div>
+    <div class="parallax-bg">
+        <div class="glow-effect" style="top:20%; left:10%"></div>
+        <div class="glow-effect" style="top:70%; right:15%"></div>
+    </div>
+    
+    <div class="container">
+        <!-- 原始事件 -->
+        <div class="timeline-bar"><div class="timeline-dot" style="left:25%"></div></div>
+        <div class="event-card">
+            <div class="year-counter" data-year="2001" data-event="9·11事件"></div>
+            <h2>纽约世贸中心袭击事件</h2>
+            <p class="event-desc">2001年9月11日，恐怖分子劫持民航客机撞击纽约世界贸易中心双子塔，造成包括救援人员在内的2977人遇难，成为21世纪初最具影响力的国际事件之一。</p>
+        </div>
+
+        <!-- 新增事件 -->
+        <div class="event-card">
+            <div class="year-counter" data-year="1989" data-event="日本投降"></div>
+            <h2>第二次世界大战的结束</h2>
+            <p class="event-desc">1945年9月2日，日本在东京湾的美国军舰“密苏里号”上签署无条件投降书，标志着第二次世界大战的结束。这场全球性冲突导致了数千万人的死亡，重塑了世界政治格局，并促成了联合国的成立。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="1945" data-event="广岛原爆"></div>
+            <h2>核时代的开端</h2>
+            <p class="event-desc">1945年8月6日，美军在广岛投下代号"小男孩"的原子弹，造成约14万人死亡，加速了第二次世界大战的结束。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="1912" data-event="泰坦尼克号沉没"></div>
+            <h2>冰海沉船</h2>
+            <p class="event-desc">1912年4月15日，当时最大的客运轮船泰坦尼克号在首航中撞击冰山沉没，造成1517人遇难，促成国际海上安全条约的建立。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="1986" data-event="切尔诺贝利事故"></div>
+            <h2>核能安全警钟</h2>
+            <p class="event-desc">1986年4月26日，切尔诺贝利核电站4号反应堆发生爆炸，成为历史上最严重的核事故，影响范围波及整个欧洲。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="1963" data-event="肯尼迪遇刺"></div>
+            <h2>总统的最后一程</h2>
+            <p class="event-desc">1963年11月22日，美国第35任总统约翰·肯尼迪在达拉斯遇刺身亡，事件引发持续数十年的阴谋论猜测。</p>
+        </div>
+   <div class="event-card">
+            <div class="year-counter" data-year="1989" data-event="柏林墙倒塌"></div>
+            <h2>法国大革命</h2>
+            <p class="event-desc">1789年7月14日，巴黎市民攻占巴士底狱，揭开了法国大革命的序幕。</p>
+        </div>
+        <div class="event-card">
+            <div class="year-counter" data-year="2008" data-event="汶川地震"></div>
+            <h2>巴蜀之殇</h2>
+            <p class="event-desc">2008年5月12日，四川汶川发生里氏8.0级地震，造成69227人遇难，是新中国成立以来破坏性最强的大地震。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="2011" data-event="福岛核事故"></div>
+            <h2>复合型灾难</h2>
+            <p class="event-desc">2011年3月11日，东日本大地震引发福岛第一核电站核泄漏事故，成为21世纪最严重的核事故之一。</p>
+        </div>
+
+        <div class="event-card">
+            <div class="year-counter" data-year="2020" data-event="新冠疫情"></div>
+            <h2>全球大流行</h2>
+            <p class="event-desc">2020年1月30日，WHO宣布新冠疫情构成国际关注的突发公共卫生事件，最终造成全球超700万人死亡。</p>
+        </div>
+    </div>
+
+    </div>
+<script>// 初始化图标和交互
+        lucide.createIcons();
+        
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dropdown', () => ({
+                open: false,
+                toggle() { this.open = !this.open }
+            }))
+        })
+                const API_URL = 'https://api.moonshot.cn/v1/chat/completions';
+        const API_KEY = 'sk-acwvYxrYYhrYTH7qtK82pUzRFJEzqgotTCEnEcBMIuwq89Y9';
+
+        document.getElementById('searchButton').addEventListener('click', generateEvent);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateEvent();
+        });
+
+        async function generateEvent() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (!input) return;
+
+            const loading = document.querySelector('.loading');
+            loading.style.display = 'block';
+            document.getElementById('searchButton').disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "moonshot-v1-8k",
+                        messages: [{
+                            role: "user",
+                            content: `请生成关于${input}的详细历史事件描述，严格按格式返回：年份|事件名称|事件描述（不超过100字）`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const [year, title, desc] = data.choices[0].message.content.split('|');
+                
+                createEventCard({
+                    year: year.trim(),
+                    event: title.trim(),
+                    title: title.trim(),
+                    desc: desc.trim()
+                });
+
+                document.getElementById('searchInput').value = '';
+
+            } catch (error) {
+                alert('生成失败，请稍后重试');
+            } finally {
+                loading.style.display = 'none';
+                document.getElementById('searchButton').disabled = false;
+            }
+        }
+
+        function createEventCard(data) {
+            const currentYear = new Date().getFullYear();
+            const yearsPassed = currentYear - data.year;
+
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
+                <div class="year-counter" data-year="${data.year}" data-event="${data.event}">
+                    ${yearsPassed}年前 · ${data.year}年 · ${data.event}
+                </div>
+                <h2>${data.title}</h2>
+                <p class="event-desc">${data.desc}</p>
+            `;
+
+            document.getElementById('events-container').prepend(card);
+            initGlowEffect(); 
+        }
+
+        
+        function initGlowEffect() {
+            document.querySelectorAll('.glow-effect').forEach((glow, index) => {
+                glow.style.transform = `translate(0,0)`;
+            });
+        }
+</script>
+</body>
+</html>
